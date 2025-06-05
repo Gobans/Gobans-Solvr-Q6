@@ -1,25 +1,10 @@
-import { SleepRecord, NewSleepRecord } from '../types/sleep';
+import { SleepRecord, NewSleepRecord, SleepInsights, SleepDiagnosis } from '../types/sleep';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
-export interface SleepInsights {
-  totalRecords: number;
-  averageSleepHours: number;
-  averageBedtime: string | null;
-  averageWakeTime: string | null;
-  weeklyAverages: Array<{
-    day: string;
-    averageHours: number;
-    recordCount: number;
-  }>;
-  qualityDistribution: Array<{
-    quality: number;
-    count: number;
-    percentage: number;
-  }>;
-}
 
-export const sleepApi = {
+
+const sleepApi = {
   // 수면 기록 생성
   createSleepRecord: async (data: NewSleepRecord, userId: string): Promise<SleepRecord> => {
     const response = await fetch(`${API_BASE_URL}/sleep/${userId}`, {
@@ -67,4 +52,19 @@ export const sleepApi = {
     });
     if (!response.ok) throw new Error('수면 기록 삭제에 실패했습니다.');
   },
-}; 
+
+  // AI 수면 진단
+  getSleepDiagnosis: async (insights: SleepInsights, userId: string): Promise<SleepDiagnosis> => {
+    const response = await fetch(`${API_BASE_URL}/sleep/${userId}/diagnosis`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(insights),
+    });
+    if (!response.ok) throw new Error('수면 진단에 실패했습니다.');
+    return response.json();
+  },
+};
+
+export default sleepApi; 

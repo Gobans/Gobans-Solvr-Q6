@@ -49,11 +49,20 @@ ${insights.qualityDistribution.map(q => `- ${q.quality}점: ${q.percentage}%`).j
         contents: prompt
       });
 
-      if (!response.text) {
+      let responseText = response.text;
+      if (!responseText) {
         throw new Error('AI 응답이 비어있습니다.');
       }
 
-      return JSON.parse(response.text) as SleepDiagnosis;
+      // Markdown 코드 블록 제거
+      if (responseText.startsWith('```json')) {
+        responseText = responseText.substring(7);
+      }
+      if (responseText.endsWith('```')) {
+        responseText = responseText.substring(0, responseText.length - 3);
+      }
+
+      return JSON.parse(responseText.trim()) as SleepDiagnosis;
     } catch (error) {
       console.error('AI 진단 중 오류 발생:', error);
       throw new Error('수면 진단을 수행할 수 없습니다.');

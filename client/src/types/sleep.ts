@@ -26,3 +26,27 @@ export interface User {
   email: string;
   role: string;
 } 
+
+export interface SleepInsights {
+  totalRecords: number;
+  averageSleepHours: number;
+  averageBedtime: string | null;
+  averageWakeTime: string | null;
+  weeklyAverages: Array<{
+    day: string;
+    averageHours: number;
+    recordCount: number;
+  }>;
+  qualityDistribution: Array<{
+    quality: number;
+    count: number;
+    percentage: number;
+  }>;
+}
+
+export interface SleepDiagnosis {
+  diagnosis: string;
+  recommendations: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+  sleepScore: number;
+}

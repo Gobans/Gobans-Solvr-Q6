@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { SleepRecord, NewSleepRecord } from '../types/sleep';
-import { sleepApi, SleepInsights } from '../api/sleep';
+import sleepApi from '../api/sleep';
+import { SleepInsights } from '../types/sleep';
 import SleepStatistics from '../components/SleepStatistics';
 
 export default function SleepRecords() {
   const { userId } = useParams<{ userId: string }>();
-  const navigate = useNavigate();
   const location = useLocation();
   const userName = location.state?.userName || '사용자';
   const [activeTab, setActiveTab] = useState<'records' | 'statistics'>('records');
@@ -295,7 +295,7 @@ export default function SleepRecords() {
         )}
 
         {activeTab === 'statistics' && insights && (
-          <SleepStatistics insights={insights} />
+          <SleepStatistics insights={insights} userId={userId} />
         )}
 
         {isModalOpen && (

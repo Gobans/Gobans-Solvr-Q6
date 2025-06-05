@@ -1,12 +1,16 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { SleepService } from '../services/sleepService';
+import { AIDiagnosisService } from '../services/aiDiagnosisService';
 import type { NewSleepRecord, UpdateSleepRecord } from '../db/schema';
+import { SleepInsights } from '../types/sleep';
 
 export class SleepController {
   private sleepService: SleepService;
+  private aiDiagnosisService: AIDiagnosisService;
 
   constructor() {
     this.sleepService = new SleepService();
+    this.aiDiagnosisService = new AIDiagnosisService();
   }
 
   async createSleepRecord(
@@ -117,18 +121,14 @@ export class SleepController {
     }
   }
 
-  async getSleepDiagnosis(request: FastifyRequest, reply: FastifyReply) {
+  async getSleepDiagnosis(request: FastifyRequest<{ Body: SleepInsights }>, reply: FastifyReply) {
     try {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.status(401).send({ error: '인증되지 않은 사용자입니다.' });
-      }
-
-      const diagnosis = await this.sleepService.getSleepDiagnosis(userId);
+      const insights = request.body;
+      const diagnosis = await this.aiDiagnosisService.diagnoseSleep(insights);
       return reply.send(diagnosis);
     } catch (error) {
-      console.error('수면 진단 조회 중 오류:', error);
-      return reply.status(500).send({ error: '수면 진단을 가져오는 중 오류가 발생했습니다.' });
+      console.error('수면 진단 중 오류:', error);
+      return reply.status(500).send({ error: '수면 진단을 수행하는 중 오류가 발생했습니다.' });
     }
   }
 } 

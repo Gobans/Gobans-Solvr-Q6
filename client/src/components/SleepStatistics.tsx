@@ -9,18 +9,42 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line
 } from 'recharts';
-import { SleepInsights } from '../api/sleep';
+import { SleepInsights, SleepDiagnosis } from '../types/sleep';
+import { useEffect, useState } from 'react';
+import sleepApi from '../api/sleep';
 
 interface SleepStatisticsProps {
   insights: SleepInsights;
+  userId: string;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-export default function SleepStatistics({ insights }: SleepStatisticsProps) {
+export default function SleepStatistics({ insights, userId }: SleepStatisticsProps) {
+  const [diagnosis, setDiagnosis] = useState<SleepDiagnosis | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDiagnosis = async () => {
+      if (insights.totalRecords === 0) return;
+      
+      try {
+        setLoading(true);
+        const diagnosisData = await sleepApi.getSleepDiagnosis(insights, userId);
+        setDiagnosis(diagnosisData);
+      } catch (err) {
+        setError('AI 진단을 불러오는데 실패했습니다.');
+        console.error('Error fetching diagnosis:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDiagnosis();
+  }, [insights, userId]);
+
   if (insights.totalRecords === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -64,6 +88,19 @@ export default function SleepStatistics({ insights }: SleepStatisticsProps) {
     name: `${item.quality}점 (${item.count}회)`
   }));
 
+  const getRiskLevelColor = (level: string) => {
+    switch (level) {
+      case 'low':
+        return 'text-green-500';
+      case 'medium':
+        return 'text-yellow-500';
+      case 'high':
+        return 'text-red-500';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 전체 통계 개요 */}
@@ -98,7 +135,7 @@ export default function SleepStatistics({ insights }: SleepStatisticsProps) {
             <XAxis dataKey="day" />
             <YAxis />
             <Tooltip 
-              formatter={(value: number, name: string) => [`${value}시간`, '평균 수면 시간']}
+              formatter={(value: number) => [`${value}시간`, '평균 수면 시간']}
               labelFormatter={(label) => `${label}`}
             />
             <Bar dataKey="averageHours" fill="#3B82F6" radius={[4, 4, 0, 0]} />
@@ -122,7 +159,7 @@ export default function SleepStatistics({ insights }: SleepStatisticsProps) {
                 fill="#8884d8"
                 dataKey="count"
               >
-                {qualityData.map((entry, index) => (
+                {qualityData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -131,6 +168,50 @@ export default function SleepStatistics({ insights }: SleepStatisticsProps) {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* AI 수면 진단 */}
+      {loading ? (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="text-red-500 text-center">{error}</div>
+        </div>
+      ) : diagnosis && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🤖 AI 수면 진단</h3>
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-md font-medium mb-2">진단 결과</h4>
+              <p className="text-gray-700">{diagnosis.diagnosis}</p>
+            </div>
+
+            <div>
+              <h4 className="text-md font-medium mb-2">수면 점수</h4>
+              <div className="flex items-center space-x-4">
+                <div className="text-3xl font-bold">{diagnosis.sleepScore}</div>
+                <div className={`text-lg font-medium ${getRiskLevelColor(diagnosis.riskLevel)}`}>
+                  {diagnosis.riskLevel === 'low' && '양호'}
+                  {diagnosis.riskLevel === 'medium' && '주의'}
+                  {diagnosis.riskLevel === 'high' && '위험'}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-md font-medium mb-2">권장사항</h4>
+              <ul className="list-disc list-inside space-y-2">
+                {diagnosis.recommendations.map((rec, index) => (
+                  <li key={index} className="text-gray-700">{rec}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
