@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { users } from '../db/schema'
 import { CreateUserDto, UpdateUserDto, User } from '../types'
 import { Database } from '../types/database'
+import crypto from 'crypto'
 
 type UserServiceDeps = {
   db: Database
@@ -13,7 +14,7 @@ export const createUserService = ({ db }: UserServiceDeps) => {
     return db.select().from(users)
   }
 
-  const getUserById = async (id: number): Promise<User | undefined> => {
+  const getUserById = async (id: string): Promise<User | undefined> => {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1)
     return result[0]
   }
@@ -24,9 +25,10 @@ export const createUserService = ({ db }: UserServiceDeps) => {
   }
 
   const createUser = async (userData: CreateUserDto): Promise<User> => {
-    const now = new Date().toISOString()
+    const now = new Date()
     const newUser = {
       ...userData,
+      id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now
     }
@@ -35,8 +37,8 @@ export const createUserService = ({ db }: UserServiceDeps) => {
     return result[0]
   }
 
-  const updateUser = async (id: number, userData: UpdateUserDto): Promise<User | undefined> => {
-    const now = new Date().toISOString()
+  const updateUser = async (id: string, userData: UpdateUserDto): Promise<User | undefined> => {
+    const now = new Date()
     const updateData = {
       ...userData,
       updatedAt: now
@@ -47,7 +49,7 @@ export const createUserService = ({ db }: UserServiceDeps) => {
     return result[0]
   }
 
-  const deleteUser = async (id: number): Promise<boolean> => {
+  const deleteUser = async (id: string): Promise<boolean> => {
     const result = await db.delete(users).where(eq(users.id, id)).returning({ id: users.id })
     return result.length > 0
   }

@@ -23,11 +23,7 @@ export const createUserController = ({ userService }: UserControllerDeps) => {
     reply: FastifyReply
   ) => {
     try {
-      const id = parseInt(request.params.id, 10)
-
-      if (isNaN(id)) {
-        return reply.code(400).send(createErrorResponse('유효하지 않은 사용자 ID입니다.'))
-      }
+      const id = request.params.id
 
       const user = await userService.getUserById(id)
 
@@ -69,12 +65,8 @@ export const createUserController = ({ userService }: UserControllerDeps) => {
     reply: FastifyReply
   ) => {
     try {
-      const id = parseInt(request.params.id, 10)
+      const id = request.params.id
       const userData = request.body
-
-      if (isNaN(id)) {
-        return reply.code(400).send(createErrorResponse('유효하지 않은 사용자 ID입니다.'))
-      }
 
       const existingUser = await userService.getUserById(id)
       if (!existingUser) {
@@ -103,11 +95,7 @@ export const createUserController = ({ userService }: UserControllerDeps) => {
     reply: FastifyReply
   ) => {
     try {
-      const id = parseInt(request.params.id, 10)
-
-      if (isNaN(id)) {
-        return reply.code(400).send(createErrorResponse('유효하지 않은 사용자 ID입니다.'))
-      }
+      const id = request.params.id
 
       const existingUser = await userService.getUserById(id)
       if (!existingUser) {
