@@ -3,8 +3,9 @@ import Database from 'better-sqlite3'
 import { mkdir } from 'fs/promises'
 import { dirname } from 'path'
 import env from '../config/env'
-import { users } from './schema'
+import { users, sleepRecords } from './schema'
 import { UserRole } from '../types'
+import crypto from 'crypto'
 
 // 데이터베이스 디렉토리 생성 함수
 async function ensureDatabaseDirectory() {
@@ -25,22 +26,48 @@ const initialUsers = [
     name: '관리자',
     email: 'admin@example.com',
     role: UserRole.ADMIN,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     name: '일반 사용자',
     email: 'user@example.com',
     role: UserRole.USER,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     name: '게스트',
     email: 'guest@example.com',
     role: UserRole.GUEST,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+]
+
+// 초기 수면 데이터
+const initialSleepRecords = [
+  {
+    userId: '', // 사용자 ID는 나중에 설정
+    date: new Date('2024-03-20'),
+    sleepStartTime: new Date('2024-03-20T23:00:00'),
+    sleepEndTime: new Date('2024-03-21T07:00:00'),
+    totalSleepHours: 8,
+    quality: 4,
+    notes: '편안한 수면',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    userId: '', // 사용자 ID는 나중에 설정
+    date: new Date('2024-03-21'),
+    sleepStartTime: new Date('2024-03-21T23:30:00'),
+    sleepEndTime: new Date('2024-03-22T06:30:00'),
+    totalSleepHours: 7,
+    quality: 3,
+    notes: '약간의 불면증',
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ]
 
@@ -60,12 +87,29 @@ async function runMigration() {
     // users 테이블 생성
     sqlite.exec(`
       CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
         role TEXT NOT NULL DEFAULT 'USER',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    `)
+
+    // sleep_records 테이블 생성
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS sleep_records (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        date INTEGER NOT NULL,
+        sleep_start_time INTEGER NOT NULL,
+        sleep_end_time INTEGER NOT NULL,
+        total_sleep_hours INTEGER NOT NULL,
+        quality INTEGER NOT NULL,
+        notes TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `)
 
@@ -78,9 +122,22 @@ async function runMigration() {
     if ((await existingUsers).length === 0) {
       // 초기 사용자 데이터 삽입
       for (const user of initialUsers) {
-        await db.insert(users).values(user)
+        const userId = crypto.randomUUID()
+        await db.insert(users).values({
+          ...user,
+          id: userId,
+        })
+
+        // 각 사용자에 대한 수면 데이터 추가
+        for (const sleepRecord of initialSleepRecords) {
+          await db.insert(sleepRecords).values({
+            ...sleepRecord,
+            id: crypto.randomUUID(),
+            userId: userId,
+          })
+        }
       }
-      console.log(`${initialUsers.length}명의 사용자가 추가되었습니다.`)
+      console.log(`${initialUsers.length}명의 사용자와 ${initialUsers.length * initialSleepRecords.length}개의 수면 기록이 추가되었습니다.`)
     } else {
       console.log('사용자 데이터가 이미 존재합니다. 초기 데이터 삽입을 건너뜁니다.')
     }
