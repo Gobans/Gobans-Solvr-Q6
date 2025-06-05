@@ -42,6 +42,130 @@ const initialUsers = [
     role: UserRole.GUEST,
     createdAt: new Date(),
     updatedAt: new Date()
+  },
+  {
+    name: '당근이',
+    email: 'carrot@sleep.app',
+    role: UserRole.USER,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+]
+
+// 차트 테스트용 더미 수면 데이터 (당근이 전용)
+const carrotSleepRecords = [
+  // 최근 2주간의 수면 기록
+  {
+    date: new Date('2024-12-05'), // 목요일
+    sleepStartTime: new Date('2024-12-05T23:30:00'),
+    sleepEndTime: new Date('2024-12-06T07:30:00'),
+    totalSleepHours: 8,
+    quality: 4,
+    notes: '깊은 잠'
+  },
+  {
+    date: new Date('2024-12-06'), // 금요일
+    sleepStartTime: new Date('2024-12-07T02:00:00'),
+    sleepEndTime: new Date('2024-12-07T07:00:00'),
+    totalSleepHours: 5,
+    quality: 2,
+    notes: '완벽한 수면'
+  },
+  {
+    date: new Date('2024-12-07'), // 토요일
+    sleepStartTime: new Date('2024-12-07T00:30:00'),
+    sleepEndTime: new Date('2024-12-07T09:00:00'),
+    totalSleepHours: 8.5,
+    quality: 4,
+    notes: '주말 늦잠'
+  },
+  {
+    date: new Date('2024-12-08'), // 일요일
+    sleepStartTime: new Date('2024-12-08T00:00:00'),
+    sleepEndTime: new Date('2024-12-08T08:30:00'),
+    totalSleepHours: 8.5,
+    quality: 3,
+    notes: '조금 피곤함'
+  },
+  {
+    date: new Date('2024-12-09'), // 월요일
+    sleepStartTime: new Date('2024-12-09T23:15:00'),
+    sleepEndTime: new Date('2024-12-10T06:45:00'),
+    totalSleepHours: 7.5,
+    quality: 3,
+    notes: '월요병'
+  },
+  {
+    date: new Date('2024-12-10'), // 화요일
+    sleepStartTime: new Date('2024-12-10T23:45:00'),
+    sleepEndTime: new Date('2024-12-11T07:15:00'),
+    totalSleepHours: 7.5,
+    quality: 4,
+    notes: '적응중'
+  },
+  {
+    date: new Date('2024-12-11'), // 수요일
+    sleepStartTime: new Date('2024-12-11T23:00:00'),
+    sleepEndTime: new Date('2024-12-12T07:00:00'),
+    totalSleepHours: 8,
+    quality: 4,
+    notes: '좋은 하루'
+  },
+  {
+    date: new Date('2024-12-12'), // 목요일
+    sleepStartTime: new Date('2024-12-12T22:45:00'),
+    sleepEndTime: new Date('2024-12-13T06:30:00'),
+    totalSleepHours: 7.75,
+    quality: 5,
+    notes: '일찍 잠'
+  },
+  {
+    date: new Date('2024-12-13'), // 금요일
+    sleepStartTime: new Date('2024-12-14T02:30:00'),
+    sleepEndTime: new Date('2024-12-14T07:30:00'),
+    totalSleepHours: 5,
+    quality: 2,
+    notes: '금요일 밤'
+  },
+  {
+    date: new Date('2024-12-14'), // 토요일
+    sleepStartTime: new Date('2024-12-14T01:00:00'),
+    sleepEndTime: new Date('2024-12-14T09:30:00'),
+    totalSleepHours: 8.5,
+    quality: 3,
+    notes: '늦게 잠'
+  },
+  {
+    date: new Date('2024-12-15'), // 일요일
+    sleepStartTime: new Date('2024-12-15T00:15:00'),
+    sleepEndTime: new Date('2024-12-15T08:15:00'),
+    totalSleepHours: 8,
+    quality: 4,
+    notes: '일요일 휴식'
+  },
+  {
+    date: new Date('2024-12-16'), // 월요일
+    sleepStartTime: new Date('2024-12-16T23:00:00'),
+    sleepEndTime: new Date('2024-12-17T07:00:00'),
+    totalSleepHours: 8,
+    quality: 3,
+    notes: '새로운 한 주'
+  },
+  {
+    date: new Date('2024-12-17'), // 화요일
+    sleepStartTime: new Date('2024-12-17T22:30:00'),
+    sleepEndTime: new Date('2024-12-18T06:30:00'),
+    totalSleepHours: 8,
+    quality: 5,
+    notes: '최고의 컨디션'
+  },
+  {
+    date: new Date('2024-12-18'), // 수요일
+    sleepStartTime: new Date('2024-12-18T23:15:00'),
+    sleepEndTime: new Date('2024-12-19T07:00:00'),
+    totalSleepHours: 7.75,
+    quality: 4,
+    notes: '적당한 피로감'
   }
 ]
 
@@ -128,16 +252,36 @@ async function runMigration() {
           id: userId,
         })
 
-        // 각 사용자에 대한 수면 데이터 추가
-        for (const sleepRecord of initialSleepRecords) {
-          await db.insert(sleepRecords).values({
-            ...sleepRecord,
-            id: crypto.randomUUID(),
-            userId: userId,
-          })
+        // 사용자별 수면 데이터 추가
+        if (user.name === '당근이') {
+          // 당근이에게는 차트 테스트용 풍부한 데이터 추가
+          for (const sleepRecord of carrotSleepRecords) {
+            await db.insert(sleepRecords).values({
+              id: crypto.randomUUID(),
+              userId: userId,
+              date: sleepRecord.date,
+              sleepStartTime: sleepRecord.sleepStartTime,
+              sleepEndTime: sleepRecord.sleepEndTime,
+              totalSleepHours: sleepRecord.totalSleepHours,
+              quality: sleepRecord.quality,
+              notes: sleepRecord.notes,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            })
+          }
+          console.log(`당근이에게 ${carrotSleepRecords.length}개의 테스트 수면 기록을 추가했습니다.`)
+        } else {
+          // 다른 사용자에게는 기본 수면 데이터 추가
+          for (const sleepRecord of initialSleepRecords) {
+            await db.insert(sleepRecords).values({
+              ...sleepRecord,
+              id: crypto.randomUUID(),
+              userId: userId,
+            })
+          }
         }
       }
-      console.log(`${initialUsers.length}명의 사용자와 ${initialUsers.length * initialSleepRecords.length}개의 수면 기록이 추가되었습니다.`)
+      console.log(`${initialUsers.length}명의 사용자가 추가되었습니다.`)
     } else {
       console.log('사용자 데이터가 이미 존재합니다. 초기 데이터 삽입을 건너뜁니다.')
     }
