@@ -114,9 +114,9 @@ export default function SleepRecords() {
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{userName}의 수면 기록</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{userName}의 수면 기록</h1>
             <p className="text-gray-600 mt-1">수면 패턴을 기록하고 관리하세요</p>
           </div>
           <button
@@ -132,57 +132,119 @@ export default function SleepRecords() {
               });
               setIsModalOpen(true);
             }}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            className="w-full sm:w-auto bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
           >
             새 기록 추가
           </button>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 시간</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">총 수면 시간</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 품질</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">특이사항</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {records.map((record) => (
-                <tr key={record.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(record.date).toLocaleDateString('ko-KR')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(record.sleepStartTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} -{' '}
-                    {new Date(record.sleepEndTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.totalSleepHours}시간</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {'⭐'.repeat(record.quality)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{record.notes || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(record)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      수정
-                    </button>
-                    <button
-                      onClick={() => handleDelete(record.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      삭제
-                    </button>
-                  </td>
+          {/* 데스크톱 테이블 뷰 */}
+          <div className="hidden md:block">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 시간</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">총 수면 시간</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 품질</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">특이사항</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {records.map((record) => (
+                  <tr key={record.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(record.date).toLocaleDateString('ko-KR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(record.sleepStartTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} -{' '}
+                      {new Date(record.sleepEndTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.totalSleepHours}시간</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {'⭐'.repeat(record.quality)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{record.notes || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(record)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => handleDelete(record.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 모바일 카드 뷰 */}
+          <div className="md:hidden">
+            {records.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                아직 수면 기록이 없습니다.
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {records.map((record) => (
+                  <div key={record.id} className="p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {new Date(record.date).toLocaleDateString('ko-KR')}
+                        </h3>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {new Date(record.sleepStartTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} - {' '}
+                          {new Date(record.sleepEndTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(record)}
+                          className="text-blue-600 hover:text-blue-900 text-sm"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDelete(record.id)}
+                          className="text-red-600 hover:text-red-900 text-sm"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">총 수면 시간:</span>
+                        <div className="font-medium">{record.totalSleepHours}시간</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">수면 품질:</span>
+                        <div className="font-medium">{'⭐'.repeat(record.quality)}</div>
+                      </div>
+                    </div>
+                    
+                    {record.notes && (
+                      <div className="text-sm">
+                        <span className="text-gray-500">특이사항:</span>
+                        <div className="mt-1 text-gray-900">{record.notes}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {isModalOpen && (
