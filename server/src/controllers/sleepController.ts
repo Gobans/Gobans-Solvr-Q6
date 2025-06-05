@@ -10,33 +10,34 @@ export class SleepController {
   }
 
   async createSleepRecord(
-    request: FastifyRequest<{ Body: Omit<NewSleepRecord, 'id' | 'userId' | 'createdAt' | 'updatedAt'> }>,
+    request: FastifyRequest<{ 
+      Params: { userId: string }; 
+      Body: Omit<NewSleepRecord, 'id' | 'userId' | 'createdAt' | 'updatedAt'> 
+    }>,
     reply: FastifyReply
   ) {
     try {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.status(401).send({ message: '인증이 필요합니다.' });
-      }
-
+      const { userId } = request.params;
       const data = request.body;
+      console.log('Creating sleep record for user:', userId, 'with data:', data);
+      
       const record = await this.sleepService.createSleepRecord(userId, data);
+      console.log('Sleep record created successfully:', record);
+      
       return reply.status(201).send(record);
     } catch (error) {
-      return reply.status(500).send({ message: '수면 기록 생성에 실패했습니다.' });
+      console.error('Error creating sleep record:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return reply.status(500).send({ message: '수면 기록 생성에 실패했습니다.', error: errorMessage });
     }
   }
 
   async getSleepRecords(
-    request: FastifyRequest,
+    request: FastifyRequest<{ Params: { userId: string } }>,
     reply: FastifyReply
   ) {
     try {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.status(401).send({ message: '인증이 필요합니다.' });
-      }
-
+      const { userId } = request.params;
       const records = await this.sleepService.getSleepRecords(userId);
       return reply.send(records);
     } catch (error) {
@@ -45,16 +46,11 @@ export class SleepController {
   }
 
   async getSleepRecordById(
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest<{ Params: { userId: string; id: string } }>,
     reply: FastifyReply
   ) {
     try {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.status(401).send({ message: '인증이 필요합니다.' });
-      }
-
-      const id = request.params.id;
+      const { userId, id } = request.params;
       const record = await this.sleepService.getSleepRecordById(userId, id);
       
       if (!record) {
@@ -69,18 +65,13 @@ export class SleepController {
 
   async updateSleepRecord(
     request: FastifyRequest<{
-      Params: { id: string };
+      Params: { userId: string; id: string };
       Body: UpdateSleepRecord;
     }>,
     reply: FastifyReply
   ) {
     try {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.status(401).send({ message: '인증이 필요합니다.' });
-      }
-
-      const id = request.params.id;
+      const { userId, id } = request.params;
       const data = request.body;
       const updatedRecord = await this.sleepService.updateSleepRecord(userId, id, data);
       
@@ -95,16 +86,11 @@ export class SleepController {
   }
 
   async deleteSleepRecord(
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest<{ Params: { userId: string; id: string } }>,
     reply: FastifyReply
   ) {
     try {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.status(401).send({ message: '인증이 필요합니다.' });
-      }
-
-      const id = request.params.id;
+      const { userId, id } = request.params;
       const success = await this.sleepService.deleteSleepRecord(userId, id);
       
       if (!success) {

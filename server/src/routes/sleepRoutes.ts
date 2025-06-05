@@ -1,21 +1,21 @@
 import { FastifyInstance } from 'fastify';
 import { SleepController } from '../controllers/sleepController';
 
+const sleepController = new SleepController();
+
 export default async function sleepRoutes(fastify: FastifyInstance) {
-  const sleepController = new SleepController();
-
   // 수면 기록 생성
-  fastify.post('/', sleepController.createSleepRecord);
+  fastify.post('/:userId', sleepController.createSleepRecord.bind(sleepController));
 
-  // 수면 기록 목록 조회
-  fastify.get('/', sleepController.getSleepRecords);
+  // 수면 기록 목록 조회 (사용자별)
+  fastify.get('/:userId', sleepController.getSleepRecords.bind(sleepController));
 
-  // 특정 수면 기록 조회
-  fastify.get('/:id', sleepController.getSleepRecordById);
+  // 수면 기록 단일 조회
+  fastify.get('/:userId/:id', sleepController.getSleepRecordById.bind(sleepController));
 
   // 수면 기록 수정
-  fastify.put('/:id', sleepController.updateSleepRecord);
+  fastify.put('/:userId/:id', sleepController.updateSleepRecord.bind(sleepController));
 
   // 수면 기록 삭제
-  fastify.delete('/:id', sleepController.deleteSleepRecord);
+  fastify.delete('/:userId/:id', sleepController.deleteSleepRecord.bind(sleepController));
 } 
