@@ -10,6 +10,9 @@ export default async function sleepRoutes(fastify: FastifyInstance) {
   // 수면 기록 목록 조회 (사용자별)
   fastify.get('/:userId', sleepController.getSleepRecords.bind(sleepController));
 
+  // 수면 인사이트 조회 (사용자별)
+  fastify.get('/:userId/insights', sleepController.getSleepInsights.bind(sleepController));
+
   // 수면 기록 단일 조회
   fastify.get('/:userId/:id', sleepController.getSleepRecordById.bind(sleepController));
 

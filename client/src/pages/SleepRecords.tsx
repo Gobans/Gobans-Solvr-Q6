@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SleepRecord, NewSleepRecord } from '../types/sleep';
-import { sleepApi } from '../api/sleep';
+import { sleepApi, SleepInsights } from '../api/sleep';
+import SleepStatistics from '../components/SleepStatistics';
 
 export default function SleepRecords() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const userName = location.state?.userName || '사용자';
-
+  const [activeTab, setActiveTab] = useState<'records' | 'statistics'>('records');
   const [records, setRecords] = useState<SleepRecord[]>([]);
+  const [insights, setInsights] = useState<SleepInsights | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<SleepRecord | null>(null);
   const [formData, setFormData] = useState<NewSleepRecord>({
@@ -24,6 +26,7 @@ export default function SleepRecords() {
   useEffect(() => {
     if (userId) {
       fetchRecords();
+      fetchInsights();
     }
   }, [userId]);
 
@@ -35,6 +38,17 @@ export default function SleepRecords() {
       setRecords(data);
     } catch (error) {
       console.error('수면 기록 조회 중 오류 발생:', error);
+    }
+  };
+
+  const fetchInsights = async () => {
+    if (!userId) return;
+    
+    try {
+      const data = await sleepApi.getSleepInsights(userId);
+      setInsights(data);
+    } catch (error) {
+      console.error('수면 인사이트 조회 중 오류 발생:', error);
     }
   };
 
@@ -51,6 +65,7 @@ export default function SleepRecords() {
       setIsModalOpen(false);
       setEditingRecord(null);
       fetchRecords();
+      fetchInsights(); // 통계도 다시 불러오기
     } catch (error) {
       console.error('수면 기록 저장 중 오류 발생:', error);
     }
@@ -94,6 +109,7 @@ export default function SleepRecords() {
       try {
         await sleepApi.deleteSleepRecord(id, userId);
         fetchRecords();
+        fetchInsights(); // 통계도 다시 불러오기
       } catch (error) {
         console.error('수면 기록 삭제 중 오류 발생:', error);
       }
@@ -138,114 +154,149 @@ export default function SleepRecords() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          {/* 데스크톱 테이블 뷰 */}
-          <div className="hidden md:block">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 시간</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">총 수면 시간</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 품질</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">특이사항</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {records.map((record) => (
-                  <tr key={record.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(record.date).toLocaleDateString('ko-KR')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(record.sleepStartTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} -{' '}
-                      {new Date(record.sleepEndTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.totalSleepHours}시간</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {'⭐'.repeat(record.quality)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{record.notes || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(record)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleDelete(record.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        삭제
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* 탭 네비게이션 */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('records')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'records'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📝 수면 기록
+              </button>
+              <button
+                onClick={() => setActiveTab('statistics')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'statistics'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                📊 통계 & 분석
+              </button>
+            </nav>
           </div>
+        </div>
 
-          {/* 모바일 카드 뷰 */}
-          <div className="md:hidden">
-            {records.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                아직 수면 기록이 없습니다.
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-200">
-                {records.map((record) => (
-                  <div key={record.id} className="p-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {new Date(record.date).toLocaleDateString('ko-KR')}
-                        </h3>
-                        <div className="text-sm text-gray-600 mt-1">
-                          {new Date(record.sleepStartTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} - {' '}
-                          {new Date(record.sleepEndTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
+        {/* 탭 컨텐츠 */}
+        {activeTab === 'records' && (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            {/* 데스크톱 테이블 뷰 */}
+            <div className="hidden md:block">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">날짜</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 시간</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">총 수면 시간</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수면 품질</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">특이사항</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {records.map((record) => (
+                    <tr key={record.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(record.date).toLocaleDateString('ko-KR')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(record.sleepStartTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} -{' '}
+                        {new Date(record.sleepEndTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.totalSleepHours}시간</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {'⭐'.repeat(record.quality)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{record.notes || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleEdit(record)}
-                          className="text-blue-600 hover:text-blue-900 text-sm"
+                          className="text-blue-600 hover:text-blue-900 mr-4"
                         >
                           수정
                         </button>
                         <button
                           onClick={() => handleDelete(record.id)}
-                          className="text-red-600 hover:text-red-900 text-sm"
+                          className="text-red-600 hover:text-red-900"
                         >
                           삭제
                         </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 모바일 카드 뷰 */}
+            <div className="md:hidden">
+              {records.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  아직 수면 기록이 없습니다.
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {records.map((record) => (
+                    <div key={record.id} className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {new Date(record.date).toLocaleDateString('ko-KR')}
+                          </h3>
+                          <div className="text-sm text-gray-600 mt-1">
+                            {new Date(record.sleepStartTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} - {' '}
+                            {new Date(record.sleepEndTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEdit(record)}
+                            className="text-blue-600 hover:text-blue-900 text-sm"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => handleDelete(record.id)}
+                            className="text-red-600 hover:text-red-900 text-sm"
+                          >
+                            삭제
+                          </button>
+                        </div>
                       </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500">총 수면 시간:</span>
+                          <div className="font-medium">{record.totalSleepHours}시간</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">수면 품질:</span>
+                          <div className="font-medium">{'⭐'.repeat(record.quality)}</div>
+                        </div>
+                      </div>
+                      
+                      {record.notes && (
+                        <div className="text-sm">
+                          <span className="text-gray-500">특이사항:</span>
+                          <div className="mt-1 text-gray-900">{record.notes}</div>
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">총 수면 시간:</span>
-                        <div className="font-medium">{record.totalSleepHours}시간</div>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">수면 품질:</span>
-                        <div className="font-medium">{'⭐'.repeat(record.quality)}</div>
-                      </div>
-                    </div>
-                    
-                    {record.notes && (
-                      <div className="text-sm">
-                        <span className="text-gray-500">특이사항:</span>
-                        <div className="mt-1 text-gray-900">{record.notes}</div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'statistics' && insights && (
+          <SleepStatistics insights={insights} />
+        )}
 
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">

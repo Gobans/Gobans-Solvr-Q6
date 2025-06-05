@@ -102,4 +102,18 @@ export class SleepController {
       return reply.status(500).send({ message: '수면 기록 삭제에 실패했습니다.' });
     }
   }
+
+  async getSleepInsights(
+    request: FastifyRequest<{ Params: { userId: string } }>,
+    reply: FastifyReply
+  ) {
+    try {
+      const { userId } = request.params;
+      const insights = await this.sleepService.getSleepInsights(userId);
+      return reply.send(insights);
+    } catch (error) {
+      console.error('Error getting sleep insights:', error);
+      return reply.status(500).send({ message: '수면 인사이트 조회에 실패했습니다.' });
+    }
+  }
 } 

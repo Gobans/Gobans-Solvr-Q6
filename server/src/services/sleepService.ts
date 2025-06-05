@@ -76,6 +76,85 @@ export class SleepService {
     return await this.sleepRecordDao.delete(id, userId);
   }
 
+  async getSleepInsights(userId: string) {
+    const records = await this.sleepRecordDao.findAllByUserId(userId);
+    
+    if (records.length === 0) {
+      return {
+        totalRecords: 0,
+        averageSleepHours: 0,
+        averageBedtime: null,
+        averageWakeTime: null,
+        weeklyAverages: [],
+        qualityDistribution: []
+      };
+    }
+
+    // 평균 수면 시간 계산
+    const averageSleepHours = records.reduce((sum, record) => sum + record.totalSleepHours, 0) / records.length;
+
+    // 평균 취침시간과 기상시간 계산
+    const bedtimes = records.map(record => this.getTimeInMinutes(new Date(record.sleepStartTime)));
+    const waketimes = records.map(record => this.getTimeInMinutes(new Date(record.sleepEndTime)));
+    
+    const averageBedtime = this.formatMinutesToTime(bedtimes.reduce((sum, time) => sum + time, 0) / bedtimes.length);
+    const averageWakeTime = this.formatMinutesToTime(waketimes.reduce((sum, time) => sum + time, 0) / waketimes.length);
+
+    // 요일별 평균 수면시간 계산
+    const weeklyData: Record<string, { total: number; count: number }> = {};
+    const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    
+    records.forEach(record => {
+      const dayOfWeek = new Date(record.date).getDay();
+      const dayName = dayNames[dayOfWeek];
+      
+      if (!weeklyData[dayName]) {
+        weeklyData[dayName] = { total: 0, count: 0 };
+      }
+      weeklyData[dayName].total += record.totalSleepHours;
+      weeklyData[dayName].count += 1;
+    });
+
+    const weeklyAverages = dayNames.map(dayName => ({
+      day: dayName,
+      averageHours: weeklyData[dayName] ? weeklyData[dayName].total / weeklyData[dayName].count : 0,
+      recordCount: weeklyData[dayName] ? weeklyData[dayName].count : 0
+    }));
+
+    // 수면 품질 분포 계산
+    const qualityCount: Record<number, number> = {};
+    records.forEach(record => {
+      qualityCount[record.quality] = (qualityCount[record.quality] || 0) + 1;
+    });
+
+    const qualityDistribution = Object.entries(qualityCount).map(([quality, count]) => ({
+      quality: parseInt(quality),
+      count: count as number,
+      percentage: Math.round((count as number / records.length) * 100)
+    })).sort((a, b) => a.quality - b.quality);
+
+    return {
+      totalRecords: records.length,
+      averageSleepHours: Math.round(averageSleepHours * 10) / 10, // 소수점 1자리
+      averageBedtime,
+      averageWakeTime,
+      weeklyAverages,
+      qualityDistribution
+    };
+  }
+
+  // 시간을 분 단위로 변환 (00:00부터의 분)
+  private getTimeInMinutes(date: Date): number {
+    return date.getHours() * 60 + date.getMinutes();
+  }
+
+  // 분을 HH:MM 형식으로 변환
+  private formatMinutesToTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60) % 24;
+    const mins = Math.round(minutes % 60);
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  }
+
   private calculateSleepHours(date: string | Date, startTime: string | Date, endTime: string | Date): number {
     // 날짜 문자열을 Date 객체로 변환
     const baseDate = typeof date === 'string' ? new Date(date) : date;
