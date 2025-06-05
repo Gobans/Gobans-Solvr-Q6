@@ -116,4 +116,19 @@ export class SleepController {
       return reply.status(500).send({ message: '수면 인사이트 조회에 실패했습니다.' });
     }
   }
+
+  async getSleepDiagnosis(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+      if (!userId) {
+        return reply.status(401).send({ error: '인증되지 않은 사용자입니다.' });
+      }
+
+      const diagnosis = await this.sleepService.getSleepDiagnosis(userId);
+      return reply.send(diagnosis);
+    } catch (error) {
+      console.error('수면 진단 조회 중 오류:', error);
+      return reply.status(500).send({ error: '수면 진단을 가져오는 중 오류가 발생했습니다.' });
+    }
+  }
 } 

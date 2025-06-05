@@ -24,4 +24,28 @@ export type UpdateSleepRecordDTO = {
   sleepEndTime?: Date;
   quality?: number;
   notes?: string;
-}; 
+};
+
+export interface SleepInsights {
+  totalRecords: number;
+  averageSleepHours: number;
+  averageBedtime: string | null;
+  averageWakeTime: string | null;
+  weeklyAverages: {
+    day: string;
+    averageHours: number;
+    recordCount: number;
+  }[];
+  qualityDistribution: {
+    quality: number;
+    count: number;
+    percentage: number;
+  }[];
+}
+
+export interface SleepDiagnosis {
+  diagnosis: string;
+  recommendations: string[];
+  riskLevel: 'low' | 'medium' | 'high';
+  sleepScore: number;
+} 

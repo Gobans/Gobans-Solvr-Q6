@@ -21,4 +21,7 @@ export default async function sleepRoutes(fastify: FastifyInstance) {
 
   // 수면 기록 삭제
   fastify.delete('/:userId/:id', sleepController.deleteSleepRecord.bind(sleepController));
-} 
+
+  // 수면 진단 조회
+  fastify.get('/:userId/diagnosis', sleepController.getSleepDiagnosis.bind(sleepController));
+}

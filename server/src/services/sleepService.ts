@@ -1,11 +1,15 @@
 import { SleepRecordDao } from '../db/dao/sleepRecordDao';
 import type { NewSleepRecord, UpdateSleepRecord } from '../db/schema';
+import { SleepInsights, SleepDiagnosis } from '../types/sleep';
+import { AIDiagnosisService } from './aiDiagnosisService';
 
 export class SleepService {
   private sleepRecordDao: SleepRecordDao;
+  private aiDiagnosisService: AIDiagnosisService;
 
   constructor() {
     this.sleepRecordDao = new SleepRecordDao();
+    this.aiDiagnosisService = new AIDiagnosisService();
   }
 
   async createSleepRecord(userId: string, data: Omit<NewSleepRecord, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) {
@@ -182,5 +186,10 @@ export class SleepService {
     const result = new Date(baseDate);
     result.setHours(hours, minutes, 0, 0);
     return result;
+  }
+
+  async getSleepDiagnosis(userId: string): Promise<SleepDiagnosis> {
+    const insights = await this.getSleepInsights(userId);
+    return this.aiDiagnosisService.diagnoseSleep(insights);
   }
 } 
