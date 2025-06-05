@@ -8,10 +8,22 @@ type UserControllerDeps = {
 }
 
 export const createUserController = ({ userService }: UserControllerDeps) => {
-  const getAllUsers = async (request: FastifyRequest, reply: FastifyReply) => {
+  const getAllUsers = async (
+    request: FastifyRequest<{ Querystring: { name?: string } }>,
+    reply: FastifyReply
+  ) => {
     try {
-      const users = await userService.getAllUsers()
-      return reply.code(200).send(createSuccessResponse(users))
+      const { name } = request.query;
+      
+      if (name) {
+        // 이름으로 사용자 검색
+        const users = await userService.getUsersByName(name);
+        return reply.code(200).send(createSuccessResponse(users));
+      } else {
+        // 모든 사용자 조회
+        const users = await userService.getAllUsers();
+        return reply.code(200).send(createSuccessResponse(users));
+      }
     } catch (error) {
       request.log.error(error)
       return reply.code(500).send(createErrorResponse('사용자 목록을 불러오는데 실패했습니다.'))

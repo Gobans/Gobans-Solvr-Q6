@@ -24,6 +24,10 @@ export const createUserService = ({ db }: UserServiceDeps) => {
     return result[0]
   }
 
+  const getUsersByName = async (name: string): Promise<User[]> => {
+    return db.select().from(users).where(eq(users.name, name))
+  }
+
   const createUser = async (userData: CreateUserDto): Promise<User> => {
     const now = new Date()
     const newUser = {
@@ -58,6 +62,7 @@ export const createUserService = ({ db }: UserServiceDeps) => {
     getAllUsers,
     getUserById,
     getUserByEmail,
+    getUsersByName,
     createUser,
     updateUser,
     deleteUser

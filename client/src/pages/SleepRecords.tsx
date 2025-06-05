@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SleepRecord, NewSleepRecord } from '../types/sleep';
 import { sleepApi } from '../api/sleep';
 
 export default function SleepRecords() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const userName = location.state?.userName || '사용자';
+
   const [records, setRecords] = useState<SleepRecord[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<SleepRecord | null>(null);
@@ -112,7 +115,10 @@ export default function SleepRecords() {
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">수면 기록</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{userName}의 수면 기록</h1>
+            <p className="text-gray-600 mt-1">수면 패턴을 기록하고 관리하세요</p>
+          </div>
           <button
             onClick={() => {
               setEditingRecord(null);
